@@ -1,0 +1,344 @@
+{
+  "model_name": "Logistic (L2)",
+  "best_params": {
+    "m__C": 0.1
+  },
+  "recalibrated": false,
+  "features": [
+    "sex",
+    "job",
+    "fam",
+    "dy",
+    "age",
+    "bmi",
+    "diet",
+    "med",
+    "ins",
+    "htn",
+    "hd",
+    "sleep",
+    "water",
+    "smoke",
+    "zarda",
+    "walk",
+    "urin",
+    "uti",
+    "pk",
+    "cal"
+  ],
+  "feature_meta": {
+    "sex": {
+      "label": "Male sex",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 0.0,
+      "expected_direction": 0
+    },
+    "job": {
+      "label": "Job exertion (1=normal..3=heavy)",
+      "kind": "ord",
+      "min": 1.0,
+      "max": 3.0,
+      "median": 1.0,
+      "expected_direction": -1
+    },
+    "fam": {
+      "label": "Family history of diabetes",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 0.0,
+      "expected_direction": 1
+    },
+    "dy": {
+      "label": "Diabetes duration (years)",
+      "kind": "cont",
+      "min": 1.0,
+      "max": 32.0,
+      "median": 1.0,
+      "expected_direction": 1
+    },
+    "age": {
+      "label": "Age (years)",
+      "kind": "cont",
+      "min": 16.0,
+      "max": 80.0,
+      "median": 46.0,
+      "expected_direction": 1
+    },
+    "bmi": {
+      "label": "BMI (kg/m2)",
+      "kind": "cont",
+      "min": 13.56,
+      "max": 41.66,
+      "median": 24.455,
+      "expected_direction": 1
+    },
+    "diet": {
+      "label": "Follows suggested diet",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 1.0,
+      "expected_direction": -1
+    },
+    "med": {
+      "label": "Takes oral diabetes medicine",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 1.0,
+      "expected_direction": 0
+    },
+    "ins": {
+      "label": "Takes insulin",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 0.0,
+      "expected_direction": 1
+    },
+    "htn": {
+      "label": "Hypertension",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 0.0,
+      "expected_direction": 1
+    },
+    "hd": {
+      "label": "Heart disease",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 0.0,
+      "expected_direction": 1
+    },
+    "sleep": {
+      "label": "Sufficient sleep (7-9 h)",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 1.0,
+      "expected_direction": -1
+    },
+    "water": {
+      "label": "Sufficient water (>2 L/day)",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 1.0,
+      "expected_direction": -1
+    },
+    "smoke": {
+      "label": "Smoker",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 0.0,
+      "expected_direction": 1
+    },
+    "zarda": {
+      "label": "Zarda / betel leaf",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 0.0,
+      "expected_direction": 1
+    },
+    "walk": {
+      "label": "Walks regularly (30+ min/day)",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 1.0,
+      "expected_direction": -1
+    },
+    "urin": {
+      "label": "Urinates properly",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 1.0,
+      "expected_direction": -1
+    },
+    "uti": {
+      "label": "Urinary infection / urological issue",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 0.0,
+      "expected_direction": 1
+    },
+    "pk": {
+      "label": "Regular pain-killer use",
+      "kind": "bin",
+      "min": 0.0,
+      "max": 1.0,
+      "median": 0.0,
+      "expected_direction": 1
+    },
+    "cal": {
+      "label": "Calorie intake (kcal/day)",
+      "kind": "cont",
+      "min": 1000.0,
+      "max": 2400.0,
+      "median": 1400.0,
+      "expected_direction": 0
+    }
+  },
+  "target": "CKD diagnosed within the 10-year observation window (BIRDEM diabetic cohort, window-start features)",
+  "cohort": {
+    "n_patients": 400,
+    "n_ckd": 185,
+    "prevalence": 0.4625,
+    "source": "Anan et al., Data in Brief 64 (2026) 112414; Mendeley doi:10.17632/hjkzgbxgv5.2"
+  },
+  "cv_protocol": "nested, patient-level, 5-fold x 3 repeats; inner 3-fold grid search",
+  "cv_metrics": {
+    "auc": 0.7539,
+    "ap": 0.7366,
+    "brier": 0.2023,
+    "cindex": 0.6845
+  },
+  "cv_auc_ci95_pooled_oof": [
+    0.7068,
+    0.8033
+  ],
+  "calibration": {
+    "slope": 1.075,
+    "in_the_large": -0.007
+  },
+  "risk_tiers": {
+    "cutpoints": [
+      0.3139824628824882,
+      0.5519511565084242
+    ],
+    "cutpoints_oof": [
+      0.33487922752251603,
+      0.5587794360312801
+    ],
+    "observed_ckd_rate": {
+      "Low": 0.21641791044776118,
+      "Medium": 0.44360902255639095,
+      "High": 0.7293233082706767
+    }
+  },
+  "cohort_score_quantiles": [
+    0.041803974623859076,
+    0.06797022375381354,
+    0.07672185775513303,
+    0.11563677784203487,
+    0.12405600336144312,
+    0.13776869463542596,
+    0.1516990959719399,
+    0.15568852638572733,
+    0.1628260858534117,
+    0.17149952649112002,
+    0.18147668878685555,
+    0.18772758392762762,
+    0.1922259083296518,
+    0.19867931187467808,
+    0.20868641779282487,
+    0.2165785732361818,
+    0.2227337180871698,
+    0.22926011420519832,
+    0.23163153121374117,
+    0.23836526916694945,
+    0.2433652789027504,
+    0.251169046714387,
+    0.2531445368447233,
+    0.26440060648467817,
+    0.2682782879037425,
+    0.2719080436677929,
+    0.27588543300738005,
+    0.2826120423183986,
+    0.2843369019745772,
+    0.2881162129819793,
+    0.2928981613726094,
+    0.3023448362937475,
+    0.30667313380360217,
+    0.3111838194239958,
+    0.3265259928379314,
+    0.33180269182088357,
+    0.33671596269029724,
+    0.34925691418161237,
+    0.35585356732474555,
+    0.3633993481143609,
+    0.36778338648300524,
+    0.3769830088901213,
+    0.38589238591426855,
+    0.3959328365348834,
+    0.4017958568888664,
+    0.40580787537856955,
+    0.41322601025814004,
+    0.41617652631713453,
+    0.42256300264127555,
+    0.42767415573100176,
+    0.4339764196210917,
+    0.44118418480532007,
+    0.44363364421298385,
+    0.445857413589873,
+    0.4534370710882938,
+    0.4609098712061964,
+    0.4666710905248832,
+    0.4807774383085994,
+    0.48927453053058945,
+    0.4936383973326391,
+    0.5036507127980215,
+    0.5119881302140148,
+    0.5188155869165744,
+    0.5268278889429104,
+    0.5311676051532424,
+    0.5413952580066292,
+    0.5452599756701395,
+    0.555159141834753,
+    0.5663521700157259,
+    0.5780065526743802,
+    0.5852221568956553,
+    0.5919922572976078,
+    0.5986669713437776,
+    0.6048543607192253,
+    0.6138866112525165,
+    0.6236520530343067,
+    0.6371203434736591,
+    0.6555443372057612,
+    0.665413823776719,
+    0.6705795368270671,
+    0.6807001769294377,
+    0.6924634426009312,
+    0.7039921319913797,
+    0.725385671420478,
+    0.7328338235948081,
+    0.738176733145853,
+    0.7530066505583979,
+    0.7621820549744929,
+    0.7779018810978523,
+    0.8013146900420327,
+    0.811185708406077,
+    0.8256979142796496,
+    0.8541790618910761,
+    0.8653209551075932,
+    0.8793382682895543,
+    0.8933570147109869,
+    0.910939645274253,
+    0.9281948937938298,
+    0.93913397930617,
+    0.9438182732401766,
+    0.9775233637793413
+  ],
+  "versions": {
+    "python": "3.13.16",
+    "sklearn": "1.7.2",
+    "pandas": "3.0.6",
+    "numpy": "2.2.6",
+    "shap": "0.52.0"
+  },
+  "limitations": [
+    "Sample is case-enriched (46% CKD): probabilities describe a population like the study sample; recalibrate for other settings.",
+    "Single hospital (BIRDEM, Dhaka), n=400, interview-based lifestyle data; no external validation.",
+    "Associations are not causal (e.g. walking and hypertension point opposite to clinical expectation).",
+    "Research prototype - not a medical device; not for clinical decision-making."
+  ]
+}

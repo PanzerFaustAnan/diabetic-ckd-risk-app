@@ -1,0 +1,9 @@
+# Runtime dependencies. Versions of numpy/scikit-learn are PINNED to the exact versions used in Colab when the model was
+# trained (see artifacts/model_metadata.json -> versions). A joblib file is only guaranteed to load with the same scikit-learn.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+scikit-learn==1.7.2
+numpy==2.2.6
+pandas==2.3.3
+joblib==1.4.2

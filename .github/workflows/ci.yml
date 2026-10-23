@@ -1,0 +1,39 @@
+# ---- Step 3: automate ---------------------------------------------------------------------------
+# GitHub reads every file in .github/workflows/. This one runs on each push to main and on every pull request:
+#   1) install the pinned dependencies and run the test-suite;
+#   2) only if tests pass, build the Docker image and smoke-test the running container.
+# A red cross on a commit means something broke before it ever reached users.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest            # a fresh virtual machine for every run (nothing carries over)
+    steps:
+      - uses: actions/checkout@v4     # download your repository into the machine
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip                  # re-use downloaded packages between runs
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
+  docker:
+    needs: test                       # skipped automatically if the tests failed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t ckd-risk-app:ci .
+      - name: Smoke test the container
+        run: |
+          docker run -d --name app -p 8080:8080 ckd-risk-app:ci
+          for i in $(seq 1 30); do curl -fsS http://localhost:8080/health && break || sleep 1; done
+          curl -fsS http://localhost:8080/health
+          curl -fsS -X POST http://localhost:8080/predict -H "Content-Type: application/json" \
+            -d '{"sex":0,"job":1,"fam":0,"dy":5,"age":50,"bmi":24,"diet":1,"med":1,"ins":0,"htn":0,"hd":0,"sleep":1,"water":1,"smoke":0,"zarda":0,"walk":1,"urin":1,"uti":0,"pk":0,"cal":1400}' | head -c 300
+          docker logs app

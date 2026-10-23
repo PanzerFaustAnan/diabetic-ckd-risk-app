@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diabetic CKD Risk Explorer</title>
+  <meta name="description" content="Research prototype: explore chronic kidney disease risk patterns in diabetic patients from non-invasive questionnaire features.">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c-5 0-10 4-10 11 0 6 3 8 5 9 2 1 3 4 5 4s3-3 5-4c2-1 5-3 5-9 0-7-5-11-10-11z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 15c2-3 4 3 6 0s3-2 4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <div><h1>Diabetic CKD Risk Explorer</h1><p>Non-invasive risk ranking · 400-patient BIRDEM cohort</p></div>
+    </div>
+    <span class="badge" title="Not a medical device">Research prototype · not medical advice</span>
+  </header>
+
+  <main class="layout">
+    <section class="card form-card" aria-labelledby="form-title">
+      <div class="card-head">
+        <h2 id="form-title">Patient information</h2>
+        <label class="example-pick">Try an example
+          <select id="example-select"><option value="">Choose…</option></select>
+        </label>
+      </div>
+      <p class="muted">Answer all questions. Nothing you enter is stored; it is sent to the model, scored and discarded.</p>
+      <form id="form" novalidate></form>
+      <div id="form-error" class="alert error" role="alert" hidden></div>
+      <div class="actions">
+        <button type="submit" form="form" id="submit" class="btn primary">Calculate</button>
+        <button type="button" id="reset" class="btn">Reset</button>
+      </div>
+    </section>
+
+    <section class="card result-card" id="results" aria-live="polite" aria-labelledby="results-title">
+      <h2 id="results-title" class="sr-only">Results</h2>
+      <div class="placeholder" id="placeholder">
+        <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="2" opacity=".35"/><path d="M18 36l8-8 7 7 13-14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h3>Your results will appear here</h3>
+        <p class="muted">Fill in the form and press <b>Calculate</b>, or load an example to see how the page works.</p>
+      </div>
+      <div id="result-body" hidden></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <details id="about"><summary>About this model and its limits</summary><div id="about-body" class="about-body">Loading…</div></details>
+    <p class="muted small">Built from the dataset “A dataset of demographic and lifestyle risk factors for assessing chronic kidney disease development in diabetic patients” (Data in Brief, 2026). A learning and portfolio project: not validated for clinical use.</p>
+  </footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Anything listed here is NOT sent to Docker when building: smaller, faster, safer images.
+venv*/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.git/
+.github/
+notebooks/
+tests/
+docs/
+node_modules/
+.env
+*.md
