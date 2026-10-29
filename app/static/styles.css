@@ -85,3 +85,6 @@ details>summary{cursor:pointer;font-weight:600}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:.4rem}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media print{.form-card,.actions,.top .badge,.example-pick{display:none}.layout{display:block}.card{box-shadow:none}}
+.credit{display:flex;align-items:center;gap:.7rem;margin:.4rem 0 0;color:var(--muted);font-size:.9rem}
+.credit a{color:var(--muted);display:inline-flex;transition:color .15s}
+.credit a:hover,.credit a:focus-visible{color:var(--accent)}
