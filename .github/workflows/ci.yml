@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest            # a fresh virtual machine for every run (nothing carries over)
     steps:
       - uses: actions/checkout@v4     # download your repository into the machine
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip                  # re-use downloaded packages between runs
