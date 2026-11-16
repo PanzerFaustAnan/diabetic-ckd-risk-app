@@ -1,4 +1,3 @@
-# ---- Step 2: containerise ----------------------------------------------------------------------
 # A Dockerfile is a recipe for an IMAGE (a frozen, runnable snapshot of your app + its dependencies).
 # Running an image gives a CONTAINER (an isolated process). Every instruction below creates a cached "layer".
 
@@ -26,7 +25,7 @@ COPY artifacts ./artifacts
 RUN useradd --create-home --uid 10001 appuser
 USER appuser
 
-# 6. EXPOSE documents the port; it does not publish it (that is `docker run -p`). Cloud Run injects its own PORT variable.
+# 6. EXPOSE documents the port; it does not publish it (that is `docker run -p`). Hosting platforms (Render, Cloud Run, ...) inject their own PORT variable.
 EXPOSE 8080
 
 # 7. Container health check: the platform can restart the container if /health stops answering.

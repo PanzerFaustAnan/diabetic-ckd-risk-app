@@ -9,15 +9,9 @@ import json
 import logging
 from pathlib import Path
 
-import joblib
 import numpy as np
-import pandas as pd
-import sklearn
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 
-log = logging.getLogger("ckd")
+log = logging.getLogger("uvicorn.error")      # uvicorn's logger is already configured, so these lines show up in the server log
 
 DISCLAIMER = ("Research prototype built on 400 diabetic patients from one hospital. It ranks risk in a population like the study "
               "sample; it is not a diagnosis and not a medical device. Talk to a doctor about any health concern.")
@@ -33,45 +27,46 @@ class ModelService:
     def __init__(self, artifact_dir: str | Path):
         self.dir = Path(artifact_dir)
         self.meta: dict = json.loads((self.dir / "model_metadata.json").read_text())
-        self.model = joblib.load(self.dir / "model.joblib")
+        # The trained model (StandardScaler + logistic regression) is fully described by four sets of numbers, exported
+        # to plain JSON. No pickle is loaded at runtime, so the service needs neither scikit-learn nor joblib.
+        self.params: dict = json.loads((self.dir / "model_params.json").read_text())
         self._validate_artifact()
 
         self.features: list[str] = self.meta["features"]
         self.fmeta: dict = self.meta["feature_meta"]
-        scaler: StandardScaler = self.model.named_steps["sc"]
-        lr: LogisticRegression = self.model.named_steps["m"]
-        self.mean = scaler.mean_.astype(float)
-        self.scale = scaler.scale_.astype(float)
-        self.coef = lr.coef_[0].astype(float)
-        self.intercept = float(lr.intercept_[0])
+        self.mean = np.asarray(self.params["mean"], dtype=float)
+        self.scale = np.asarray(self.params["scale"], dtype=float)
+        self.coef = np.asarray(self.params["coef"], dtype=float)
+        self.intercept = float(self.params["intercept"])
         self.cuts = self.meta["risk_tiers"]["cutpoints"]
         self.tier_rates = self.meta["risk_tiers"]["observed_ckd_rate"]
         self.quantiles = np.asarray(self.meta["cohort_score_quantiles"], dtype=float)   # 101 points: 0th..100th percentile
         # features whose model direction contradicts clinical expectation (and is not negligible: |coef| >= 0.1 per SD)
         self.contradictory = [
-            f for f, c in zip(self.features, self.coef)
+            f for f, c in zip(self.features, self.coef, strict=True)
             if self.fmeta[f]["expected_direction"] != 0 and np.sign(c) != self.fmeta[f]["expected_direction"] and abs(c) >= 0.1
         ]
-        self.version_ok = sklearn.__version__ == self.meta["versions"]["sklearn"]
-        if not self.version_ok:
-            log.warning("scikit-learn %s differs from training version %s: results may differ or loading may fail",
-                        sklearn.__version__, self.meta["versions"]["sklearn"])
 
     # ------------------------------------------------------------------ safety checks
     def _validate_artifact(self) -> None:
         """Fail loudly at startup (not silently at the first request) if the artifact is not what the code expects."""
-        if not isinstance(self.model, Pipeline) or list(self.model.named_steps) != ["sc", "m"]:
-            raise RuntimeError("Expected Pipeline(StandardScaler 'sc', LogisticRegression 'm'); the exported model differs. "
-                               "The closed-form explanation in this service only works for that structure.")
-        if list(self.model.feature_names_in_) != self.meta["features"]:
-            raise RuntimeError("Feature order in model and metadata disagree")
+        p, n = self.params, len(self.meta["features"])
+        if p["features"] != self.meta["features"]:
+            raise RuntimeError("Feature order in model_params.json and model_metadata.json disagree")
+        if not all(len(p[k]) == n for k in ("mean", "scale", "coef")):
+            raise RuntimeError("model_params.json: mean, scale and coef must each have one value per feature")
+        numbers = np.asarray(p["mean"] + p["scale"] + p["coef"] + [p["intercept"]], dtype=float)
+        if not np.all(np.isfinite(numbers)) or min(p["scale"]) <= 0:
+            raise RuntimeError("model_params.json contains non-finite values or a non-positive scale")
 
     # ------------------------------------------------------------------ core
-    def _frame(self, profile: dict) -> pd.DataFrame:
-        return pd.DataFrame([{f: float(profile[f]) for f in self.features}])[self.features]
+    def _vector(self, profile: dict) -> np.ndarray:
+        return np.array([float(profile[f]) for f in self.features])
 
     def score(self, profile: dict) -> float:
-        return float(self.model.predict_proba(self._frame(profile))[0, 1])
+        """Logistic regression by hand: standardise, take the weighted sum, squash to a probability."""
+        z = self.intercept + float(self.coef @ ((self._vector(profile) - self.mean) / self.scale))
+        return float(1.0 / (1.0 + np.exp(-z)))
 
     def tier(self, p: float) -> str:
         return "Low" if p < self.cuts[0] else ("Medium" if p < self.cuts[1] else "High")
@@ -85,8 +80,7 @@ class ModelService:
               phi_j = coef_j * (x_j - mean_j) / scale_j
         and  logit(p) = intercept + sum_j phi_j   (additivity; verified in the tests).
         The 'average patient' is the training mean. No SHAP library needed, which keeps the Docker image small."""
-        x = np.array([float(profile[f]) for f in self.features])
-        return self.coef * (x - self.mean) / self.scale
+        return self.coef * (self._vector(profile) - self.mean) / self.scale
 
     def value_text(self, f: str, v: float) -> str:
         kind = self.fmeta[f]["kind"]
@@ -143,6 +137,8 @@ class ModelService:
             values = [0, 1]
         else:
             lo, hi = GRID[feature]
+            if feature == "dy":                       # nobody has had diabetes for longer than they have been alive
+                hi = max(lo + 1, min(hi, float(profile["age"])))
             values = list(np.linspace(lo, hi, 8))
             if feature in ("age", "dy", "cal"):
                 values = [float(round(v)) for v in values]
@@ -169,7 +165,7 @@ class ModelService:
         m = self.meta
         return dict(model_name=m["model_name"], target=m["target"], cohort=m["cohort"], cv_protocol=m["cv_protocol"], cv_metrics=m["cv_metrics"],
                     cv_auc_ci95=m["cv_auc_ci95_pooled_oof"], calibration=m["calibration"], risk_tiers=m["risk_tiers"],
-                    limitations=m["limitations"], versions=m["versions"], runtime_sklearn=sklearn.__version__, version_ok=self.version_ok,
+                    limitations=m["limitations"], versions=m["versions"],
                     features={f: dict(label=v["label"], kind=v["kind"], min=v["min"], max=v["max"]) for f, v in self.fmeta.items()},
                     contradictory=self.contradictory,
                     cohort_score_quantiles=m["cohort_score_quantiles"])

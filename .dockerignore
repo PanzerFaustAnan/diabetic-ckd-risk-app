@@ -6,9 +6,12 @@ __pycache__/
 .pytest_cache/
 .git/
 .github/
-notebooks/
 tests/
-docs/
 node_modules/
 .env
 *.md
+assets/
+LICENSE
+ruff.toml
+requirements-dev.txt
+pytest.ini

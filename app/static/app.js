@@ -251,7 +251,7 @@ function renderAbout(info) {
       <tr><td>Calibration slope (ideal 1)</td><td>${info.calibration.slope.toFixed(2)}</td></tr>
       <tr><td>Observed CKD rate by group</td><td>Lower ${pct(info.risk_tiers.observed_ckd_rate.Low)} · Moderate ${pct(info.risk_tiers.observed_ckd_rate.Medium)} · Higher ${pct(info.risk_tiers.observed_ckd_rate.High)}</td></tr></table>
     <p><b>Limitations</b></p><ul>${info.limitations.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
-    <p class="muted small">Model built with scikit-learn ${esc(info.versions.sklearn)}; running ${esc(info.runtime_sklearn)}${info.version_ok ? "" : " (version mismatch!)"}.</p>`;
+    <p class="muted small">Trained with scikit-learn ${esc(info.versions.sklearn)}; served from the exported coefficients.</p>`;
 }
 
 /* ---------- 6. Wiring ---------- */

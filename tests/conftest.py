@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app, ARTIFACT_DIR
+from app.main import ARTIFACT_DIR, app
 from app.model_service import ModelService
 
 

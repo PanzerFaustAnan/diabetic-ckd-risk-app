@@ -12,6 +12,7 @@ Two layers of checking (an important design idea):
   accepted, but the response carries a warning, because the model would be extrapolating.
 """
 from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 FEATURE_NAMES = Literal["sex", "job", "fam", "dy", "age", "bmi", "diet", "med", "ins", "htn", "hd",
@@ -20,7 +21,9 @@ FEATURE_NAMES = Literal["sex", "job", "fam", "dy", "age", "bmi", "diet", "med", 
 
 class PatientInput(BaseModel):
     """The 20 non-invasive features. Names and codings are identical to the training notebooks."""
-    model_config = ConfigDict(extra="forbid")      # a misspelt field name is an error, never silently ignored
+    # extra="forbid": a misspelt field name is an error, never silently ignored.
+    # strict=True: numbers must arrive as JSON numbers; "46" (a string) or true (a boolean) are rejected, not converted.
+    model_config = ConfigDict(extra="forbid", strict=True)
 
     sex: int = Field(..., ge=0, le=1, description="1 = male, 0 = female")
     job: int = Field(..., ge=1, le=3, description="Physical exertion of work: 1 normal, 2 intermediate, 3 heavy")

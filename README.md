@@ -1,8 +1,14 @@
 # Diabetic CKD Risk Explorer
 
+[![CI](https://github.com/PanzerFaustAnan/diabetic-ckd-risk-app/actions/workflows/ci.yml/badge.svg)](https://github.com/PanzerFaustAnan/diabetic-ckd-risk-app/actions/workflows/ci.yml)
+
+**Live demo: https://diabetic-ckd-risk-app.onrender.com/** (free hosting: the first load can take about a minute while the server wakes up)
+
 A research-prototype web app that ranks chronic-kidney-disease (CKD) risk for diabetic patients from 20 non-invasive
 questionnaire features, explains the result, and shows general guideline-based health guidance.
-Built end-to-end: data audit → model evaluation → FastAPI service → Docker → CI → cloud.
+Built end-to-end: model evaluation → FastAPI service → Docker → CI → cloud deployment.
+
+![Screenshot of the app showing the form, the risk group and the charts](assets/screenshot.png)
 
 > **Not a medical device.** Trained on 400 patients from one hospital (BIRDEM, Dhaka). It ranks risk in a population like the study sample;
 > it does not diagnose. See "Honest limitations".
@@ -20,9 +26,9 @@ Built end-to-end: data audit → model evaluation → FastAPI service → Docker
  Browser (static/index.html + app.js)
      │  JSON over HTTP
      ▼
- FastAPI  app/main.py ──validates──► schemas.py (Pydantic)
+ FastAPI  app/main.py ──validates──► schemas.py (Pydantic, strict types)
      │                       │
-     │                       ├─► model_service.py ─► artifacts/model.joblib  (scikit-learn Pipeline: scaler + logistic regression)
+     │                       ├─► model_service.py ─► artifacts/model_params.json  (scaler + logistic-regression coefficients)
      │                       └─► guidance.py        (rule-based, guideline text)
      ▼
  /predict  /sensitivity  /model-info  /examples  /health  /docs
@@ -33,7 +39,8 @@ Built end-to-end: data audit → model evaluation → FastAPI service → Docker
 python -m venv venv
 source venv/bin/activate          # Windows PowerShell: venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
-python -m pytest -q               # 22 tests should pass
+python -m pytest -q               # 25 tests should pass
+ruff check .                      # linter
 uvicorn app.main:app --reload     # then open http://127.0.0.1:8000  (API docs: /docs)
 ```
 
@@ -52,25 +59,41 @@ docker run --rm -p 8080:8080 ckd-risk-app      # open http://localhost:8080
 | GET | `/examples` | Example patient payloads |
 | GET | `/health` | Liveness probe |
 
-Example: `curl -X POST localhost:8000/predict -H "Content-Type: application/json" -d @artifacts/example_requests.json` needs one profile; see `/docs` for the schema.
+Example:
+```bash
+curl -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" \
+  -d '{"sex":0,"job":1,"fam":0,"dy":5,"age":50,"bmi":24,"diet":1,"med":1,"ins":0,"htn":0,"hd":0,"sleep":1,"water":1,"smoke":0,"zarda":0,"walk":1,"urin":1,"uti":0,"pk":0,"cal":1400}'
+```
+The full schema is in the interactive docs at `/docs`.
 
 ## Repository map
 ```
-app/            main.py (routes) · schemas.py (validation) · model_service.py (model logic) · guidance.py (advice rules) · static/ (UI)
-artifacts/      model.joblib · model_metadata.json · example_requests.json   (exported by notebook 02)
-tests/          model, guidance and API tests (22)
-notebooks/      01 data audit & EDA · 02 modelling, evaluation, explainability
-docs/           LEARNING_GUIDE.md (read this) · STEP4_DEPLOY.md · deploy.yml.example
-Dockerfile · .github/workflows/ci.yml · requirements*.txt
+app/            main.py (routes, security headers) · schemas.py (validation) · model_service.py (model logic) · guidance.py (advice rules) · static/ (UI)
+artifacts/      model_params.json (coefficients) · model_metadata.json (metrics, ranges, tiers) · example_requests.json
+tests/          model, guidance and API tests (25)
+assets/         screenshot used in this README
+Dockerfile · .github/workflows/ci.yml · .github/dependabot.yml · requirements*.txt · ruff.toml
 ```
 
 ## Key design decisions
-* **Honest evaluation:** nested, repeated, patient-level cross-validation; AUC ≈ 0.75 (95% CI 0.71–0.80), calibration slope 1.07. Earlier single-split numbers (0.91–0.95) were not reproducible.
+* **Honest evaluation:** nested, repeated, patient-level cross-validation; AUC ≈ 0.75 (95% CI 0.71–0.80), calibration slope 1.07.
 * **Simple model:** regularised logistic regression; all model families were statistically tied, so the simplest won (one-standard-error rule).
-* **Explanations without the SHAP library:** for a linear model, SHAP has a closed form; we compute it directly (tested for exact additivity), keeping the image small.
+* **No pickle at runtime:** the trained scaler and logistic regression are exported as plain numbers (`model_params.json`) and the score is
+  computed directly. The service therefore needs neither scikit-learn nor joblib, the image is smaller, and no executable file format is loaded.
+  Golden-value tests check that the scores match the original scikit-learn pipeline.
+* **Explanations without the SHAP library:** for a linear model, SHAP has a closed form; it is computed directly and tested for exact additivity.
 * **Two separate layers:** model output (descriptive) vs guideline advice (never derived from the model).
-* **Version pinning:** `scikit-learn==1.7.2` matches the Colab training run; `/health` reports whether versions match.
+* **Defensive API:** strict input types, unknown fields rejected, request-size limit, validation errors that never echo submitted values,
+  security headers (Content-Security-Policy, no framing), `no-store` on prediction responses, non-root container.
 
 ## Honest limitations
-Case-enriched sample (46% CKD) so scores are not population risks · single hospital, n = 400, diabetes medical book-reported lifestyle data ·
-associations are not causal · training data are thin beyond ~15 years of diabetes · guidance text awaits clinician review.
+Case-enriched sample (46% CKD) so scores are not population risks · single hospital, n = 400, lifestyle data collected by survey alongside the
+patients' diabetes record books · associations are not causal · training data are thin beyond ~15 years of diabetes · no external validation ·
+guidance text awaits clinician review.
+
+## Data
+Dataset: *A dataset of demographic and lifestyle risk factors for assessing chronic kidney disease development in diabetic patients*,
+Data in Brief (2026); Mendeley Data, doi:[10.17632/hjkzgbxgv5.2](https://doi.org/10.17632/hjkzgbxgv5.2).
+
+## Author and licence
+Built by Ahmed Anan ([GitHub](https://github.com/PanzerFaustAnan)). Code released under the [MIT licence](LICENSE).

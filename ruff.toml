@@ -1,0 +1,7 @@
+# Linter settings. `ruff check .` runs in CI; a failure there means a likely bug (unused import, undefined name, ...).
+line-length = 160
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]   # long guideline sentences and one-line dict builders are kept on one line on purpose

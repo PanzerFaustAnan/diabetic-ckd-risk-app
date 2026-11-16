@@ -4,14 +4,15 @@ import math
 import numpy as np
 import pytest
 
-# GOLDEN VALUES: scores produced by the exported model.joblib with the pinned library versions. If a dependency upgrade or a
-# re-export changes them, this test fails and forces a conscious decision ("regression test" / "golden-master test").
+# GOLDEN VALUES: scores produced by the original scikit-learn pipeline. The service now computes the same numbers from the
+# exported coefficients (artifacts/model_params.json). If a re-export or a code change moves them, this test fails and forces a
+# conscious decision ("regression test" / "golden-master test").
 GOLDEN = {"high_risk_example": 0.9775, "low_risk_example": 0.0418, "median_profile": None}
 
 
 def test_artifact_loads_and_matches_metadata(service):
-    assert service.features == service.meta["features"]
-    assert service.version_ok, "scikit-learn differs from the training version; see requirements.txt"
+    assert service.features == service.meta["features"] == service.params["features"]
+    assert len(service.coef) == len(service.mean) == len(service.scale) == 20
 
 
 def test_golden_scores(service, examples):
@@ -35,7 +36,7 @@ def test_contributions_are_additive_in_log_odds(service, examples):
 
 
 def test_average_patient_has_zero_contributions(service):
-    avg = dict(zip(service.features, service.mean))
+    avg = dict(zip(service.features, service.mean, strict=True))
     assert np.allclose(service.contributions(avg), 0)
 
 

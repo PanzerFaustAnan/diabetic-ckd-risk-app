@@ -8,7 +8,8 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .guidance import SOURCES, STATUS, build_guidance
@@ -18,7 +19,7 @@ from .schemas import PatientInput, PredictionResponse, SensitivityRequest, Sensi
 ROOT = Path(__file__).resolve().parent.parent
 ARTIFACT_DIR = Path(os.getenv("MODEL_DIR", ROOT / "artifacts"))
 STATIC_DIR = Path(__file__).resolve().parent / "static"
-log = logging.getLogger("ckd")
+log = logging.getLogger("uvicorn.error")
 
 
 @asynccontextmanager
@@ -39,6 +40,36 @@ app = FastAPI(
 )
 
 
+MAX_BODY_BYTES = 16_384          # a valid request is under 1 kB
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+                               "frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+}
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(request: Request, exc: RequestValidationError):
+    """Say what was wrong without echoing the submitted values back (health data; also NaN/Infinity cannot be JSON-encoded)."""
+    detail = [{"type": e["type"], "loc": e["loc"], "msg": e["msg"]} for e in exc.errors()]
+    return JSONResponse(status_code=422, content={"detail": detail})
+
+
+@app.middleware("http")
+async def limits_and_headers(request: Request, call_next):
+    length = request.headers.get("content-length")
+    if request.method == "POST" and (length is None or not length.isdigit() or int(length) > MAX_BODY_BYTES):
+        return JSONResponse(status_code=413, content={"detail": "Request body too large"})
+    response = await call_next(request)
+    if not request.url.path.startswith(("/docs", "/redoc")):      # the Swagger page loads its assets from a CDN
+        for k, v in SECURITY_HEADERS.items():
+            response.headers.setdefault(k, v)
+    return response
+
+
 @app.middleware("http")
 async def no_store_for_api(request: Request, call_next):
     """Health data should never be cached by browsers or proxies."""
@@ -52,7 +83,7 @@ async def no_store_for_api(request: Request, call_next):
 def health(request: Request):
     """Liveness/readiness probe: cloud platforms call this to know the container is alive."""
     svc: ModelService = request.app.state.service
-    return {"status": "ok", "model": svc.meta["model_name"], "sklearn_version_matches_training": svc.version_ok}
+    return {"status": "ok", "model": svc.meta["model_name"]}
 
 
 @app.get("/model-info", tags=["ops"])
