@@ -16,7 +16,7 @@ jobs:
   test:
     runs-on: ubuntu-latest            # a fresh virtual machine for every run (nothing carries over)
     steps:
-      - uses: actions/checkout@v4     # download your repository into the machine
+      - uses: actions/checkout@v7     # download your repository into the machine
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -33,7 +33,7 @@ jobs:
     needs: test                       # skipped automatically if the tests failed
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build image
         run: docker build -t ckd-risk-app:ci .
       - name: Smoke test the container
