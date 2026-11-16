@@ -2,7 +2,7 @@
 # Running an image gives a CONTAINER (an isolated process). Every instruction below creates a cached "layer".
 
 # 1. Start from an official, small Python image. 3.12-slim = Debian + Python 3.12 without extras.
-FROM python:3.12-slim
+FROM python:3.15-slim
 
 # 2. Sensible Python defaults for containers: no .pyc files, unbuffered logs (so you see them immediately).
 ENV PYTHONDONTWRITEBYTECODE=1 \
