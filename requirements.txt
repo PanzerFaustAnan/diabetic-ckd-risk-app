@@ -1,6 +1,6 @@
 # Runtime dependencies (pinned). The model is served from exported coefficients (artifacts/model_params.json), so
 # scikit-learn, pandas and joblib are not needed at runtime.
-fastapi==0.163.1
+fastapi==0.165.0
 uvicorn[standard]==0.54.0
 pydantic==2.14.3
 numpy==2.2.6
