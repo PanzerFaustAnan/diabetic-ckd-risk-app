@@ -2,5 +2,5 @@
 # scikit-learn, pandas and joblib are not needed at runtime.
 fastapi==0.163.1
 uvicorn[standard]==0.54.0
-pydantic==2.14.3
+pydantic==2.14.4
 numpy==2.2.6
